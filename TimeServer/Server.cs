@@ -13,11 +13,12 @@ namespace TimeServer
         private static byte[] _buffer = new byte[1024];
         private static List<Socket> _clientSockets = new List<Socket>();
         private static Socket _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        private static String[] ipAddresses = new String[2];
+        private static int countIP = 0;
 
         static void Main(string[] args)
         {
             Console.Title = "Server";
-            Console.WriteLine(IPAddress.Any);
             SetupServer();
             Console.ReadKey();
         }
@@ -38,8 +39,17 @@ namespace TimeServer
             Socket socket = _serverSocket.EndAccept(AR);
             _clientSockets.Add(socket);
             Console.WriteLine("Client Connected!");
+            Console.WriteLine(_clientSockets.Count());
+            IPEndPoint ClientAddress =  (IPEndPoint)socket.RemoteEndPoint;
+            String ClientIP = string.Empty;
+            Console.WriteLine("Endpoint.Address : " + ClientAddress.Address);
+            Console.WriteLine("Endpoint.AddressFamily : " + ClientAddress.AddressFamily);
+            Console.WriteLine("Endpoint.Port : " + ClientAddress.Port);
+            Console.WriteLine("Endpoint.ToString() : " + ClientAddress.ToString());
+            ipAddresses[countIP] = ClientAddress.ToString();
+            countIP++;
+
             socket.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallBack), socket);
-            Console.WriteLine((IPEndPoint)socket.RemoteEndPoint);
             _serverSocket.BeginAccept(new AsyncCallback(AcceptCallback), null);
         }
 
@@ -64,6 +74,10 @@ namespace TimeServer
                 else
                 {
                     response = DateTime.Now.ToLongTimeString();
+                }
+
+                for (int i = 0; i < 2; i++){
+                    Console.WriteLine("IP address "+ipAddresses[i]);
                 }
 
                 byte[] data = Encoding.ASCII.GetBytes(response);
